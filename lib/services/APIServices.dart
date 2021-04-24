@@ -70,7 +70,7 @@ class APIService {
           .then((data) {
         printInfo(json.encode(item.toJson()));
         final jsonData = json.decode(data.body);
-        printInfo(json.encode(item.toJson()));
+        print(jsonData);
         if (data.statusCode == 200) {
           return APIResponse<HomeModels>(data: HomeModels.fromJson(jsonData));
         }

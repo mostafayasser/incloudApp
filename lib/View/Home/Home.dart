@@ -35,6 +35,7 @@ class _HomeState extends State<Home> {
   DateFormat format = DateFormat("EEEE, MMMM dd, yyyy");
   StopWatchTimer _stopWatchTimer;
   int val = 0;
+  static int firstTime = 0;
   @override
   void initState() {
     if (mounted) {
@@ -75,7 +76,12 @@ class _HomeState extends State<Home> {
     });
 
     sharedPreferences = await SharedPreferences.getInstance();
-    isCheckIn = sharedPreferences.getBool('check') ?? true;
+    if (firstTime == 0) {
+      isCheckIn =
+          widget.homeModels.data.attendanceData.atwork.toLowerCase() == "no";
+      firstTime = 1;
+    }
+
     attend_id = sharedPreferences.getInt("attend") ?? 0;
     val = sharedPreferences.getInt("time") ?? 0;
     var serverTime = await service.getServerTime();
@@ -85,6 +91,7 @@ class _HomeState extends State<Home> {
 
     print("attend: $attendTime");
     print(timerDifference);
+    print(isCheckIn);
     if (!isCheckIn) {
       _stopWatchTimer = StopWatchTimer();
       _stopWatchTimer.onExecute.add(StopWatchExecute.start);
@@ -94,16 +101,16 @@ class _HomeState extends State<Home> {
       _stopWatchTimer.onExecute.add(StopWatchExecute.start);
       _stopWatchTimer.rawTime.listen((event) {
         setState(() {
-          displayTime =
-              StopWatchTimer.getDisplayTime(event, milliSecond: false);
+          displayTime = StopWatchTimer.getDisplayTime(
+              event >= 86400000 ? 0 : event,
+              milliSecond: false);
         });
       });
     } else {
       _stopWatchTimer = StopWatchTimer();
       _stopWatchTimer.onExecute.add(StopWatchExecute.stop);
       setState(() {
-        displayTime = StopWatchTimer.getDisplayTime(serverTime.data.time,
-            milliSecond: false);
+        displayTime = StopWatchTimer.getDisplayTime(0, milliSecond: false);
       });
     }
     setState(() {
@@ -238,7 +245,6 @@ class _HomeState extends State<Home> {
                               isCheckIn = false;
                               attend_id = res.data.data.attendId;
                             });
-
                             sharedPreferences.setInt(
                                 "time", DateTime.now().millisecondsSinceEpoch);
                             sharedPreferences.setBool('check', false);
@@ -313,9 +319,6 @@ class _HomeState extends State<Home> {
                               .homeModels.data.attendanceData.transactionID);
                           //sharedPreferences.setBool('check', true);
                           if (!res.error) {
-                            setState(() {
-                              isCheckIn = true;
-                            });
                             _stopWatchTimer.onExecute
                                 .add(StopWatchExecute.stop);
 
@@ -325,6 +328,9 @@ class _HomeState extends State<Home> {
 
                             sharedPreferences.setInt("time", 0);
                             sharedPreferences.setBool('check', true);
+                            setState(() {
+                              isCheckIn = true;
+                            });
                           } else {
                             Fluttertoast.showToast(
                                 msg: (res.errorMessage == null ||
