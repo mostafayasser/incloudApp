@@ -27,7 +27,7 @@ class _HomeState extends State<Home> {
   SharedPreferences sharedPreferences;
   LocationData locationData;
   LocationData loc;
-  bool isCheckIn = true;
+  static bool isCheckIn = true;
   bool load = false;
   String distance = "";
   int attend_id = 0;
